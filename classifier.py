@@ -6,7 +6,7 @@ from torch.utils import data
 from torchvision import transforms
 import random
 import pandas
-import numpy
+import numpy as np
 import matplotlib.pyplot as plt
 from IPython import display
 import visdom
@@ -55,7 +55,7 @@ def classifier(num_channels=64,growth_rate=32,num_output=10,num_convs_in_dense_b
         nn.MaxPool2d(kernel_size=3,stride=2,padding=1)
     )
     for i,num_convs in enumerate(num_convs_in_dense_block):
-        blks.append(DenseBlock())
+        blks.append(DenseBlock(num_convs,num_channels,growth_rate))
         num_channels += num_convs*growth_rate
         if i != len(num_convs_in_dense_block) - 1:
             blks.append(transition_block(num_channels,num_channels//2))
@@ -74,7 +74,7 @@ class accumulator: #轮子，用于记录训练中的loss和accuracy以便于可
     def __init__(self,n):
         self.data = [0.0]*n
         
-    def add(self,*args):
+    def add(self,args):
         self.data = [a + float(b) for a,b in zip(self.data,args)]
         
     def reset(self):
@@ -84,13 +84,22 @@ class accumulator: #轮子，用于记录训练中的loss和accuracy以便于可
         return self.data[idx]
 
 class visualize(object): #利用visdom实现loss,accuracy的可视化监控
-    def __init__(self,env='default',**kwargs):
-        self.vis = visdom.Visdom(env=env,**kwargs)
-        self.index = {}
-        self.vis.line([0.],[0.],win='classifier',opts=dict(title = 'classifier'))
+    def __init__(self):
+        self.vis = visdom.Visdom()
+        self.vis.line(
+            X=[0.],
+            Y=[[0.,0.,0.]],
+            win='classifier',
+            env='module_1',
+            opts=dict(title = 'classifier',legend=['train_loss','train_accuracy','test_accuracy']))
     
     def paint(self,train_loss,test_accuracy,train_accuracy,epochs):
-        self.vis.line([[train_loss,test_accuracy,train_accuracy]],[epochs],win='train',update='append')
+        self.vis.line(
+            X=[epochs],
+            Y=[[train_loss,test_accuracy,train_accuracy]],
+            win='classifier',
+            update='append',
+            opts=dict(legend=['train_loss','train_accuracy','test_accuracy']))
 
 def data_iter(data,labels,batch_size=100): #输入张量
     data_set = TensorDataset(torch.FloatTensor(data),torch.LongTensor(labels))
@@ -149,5 +158,29 @@ def accuracy_test(net,data_iter,device=None):
             else:
                 X = X.to(device)
             y = y.to(device)
-            metric.add(accuracy(net(X), y), y.numel())
+            metric.add((accuracy(net(X), y), y.numel()))
     return metric[0] / metric[1]
+
+'''下面是测试用代码'''
+import d2l
+
+def load_data_fashion_mnist(batch_size, resize=None):  #@save
+    """下载Fashion-MNIST数据集，然后将其加载到内存中"""
+    trans = [transforms.ToTensor()]
+    if resize:
+        trans.insert(0, transforms.Resize(resize))
+    trans = transforms.Compose(trans)
+    mnist_train = torchvision.datasets.FashionMNIST(
+        root="../data", train=True, transform=trans, download=False)
+    mnist_test = torchvision.datasets.FashionMNIST(
+        root="../data", train=False, transform=trans, download=False)
+    return (data.DataLoader(mnist_train, batch_size, shuffle=True,
+                            num_workers=1),
+            data.DataLoader(mnist_test, batch_size, shuffle=False,
+                            num_workers=1))
+
+if __name__ == '__main__':
+    lr,num_epochs,batch_size = 0.1,10,256
+    train_iter,test_iter = load_data_fashion_mnist(batch_size,resize = 96)
+    net = classifier()
+    train(net,train_iter,test_iter,num_epochs,loss(),optimize(net),'cuda')
