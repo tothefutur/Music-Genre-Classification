@@ -42,6 +42,12 @@ def classifier(conv_arch = ((1,64),(1,128),(2,256),(2,512),(2,512)),ratio = 1,ou
         nn.Linear(4096,4096),nn.ReLU(),nn.Dropout(0.5),
         nn.Linear(4096,output)
     )
+    
+def weight_init(m):
+    if type(m) == nn.Linear:
+        nn.init.xavier_normal_(m.weight)
+    elif type(m) == nn.Conv2d:
+        nn.init.xavier_normal_(m.weight)
 
 class accumulator: #轮子，用于记录训练中的loss和accuracy以便于可视化
     def __init__(self,n):
@@ -82,8 +88,8 @@ def data_iter(data,labels,batch_size=100): #输入张量
 def loss():
     return torch.nn.CrossEntropyLoss()
 
-def optimize(model,lr = 0.01):
-    return torch.optim.SGD(model.parameters(),lr=lr)
+def optimize(model,lr = 0.001):
+    return torch.optim.SGD(model.parameters(),lr=lr,momentum=0.9)
 
 def train_epoch(X,y,net,loss,optimizer,device): # return the loss and accuracy
     optimizer.zero_grad()
@@ -152,9 +158,10 @@ def load_data_fashion_mnist(batch_size, resize=None):  #@save
                             num_workers=1))
 
 if __name__ == '__main__':
-    lr,num_epochs,batch_size = 0.01,10,50
+    lr,num_epochs,batch_size = 0.001,10,50
     train_iter,test_iter = load_data_fashion_mnist(batch_size,resize = 96)
     net = classifier(ratio=4,size=96)
+    net.apply(weight_init)
     train(net,train_iter,test_iter,num_epochs,loss(),optimize(net,lr),'cuda')
     '''X = torch.randn(size=(1,1,96,96))
     for blk in net:
