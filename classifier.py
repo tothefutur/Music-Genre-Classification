@@ -12,62 +12,35 @@ from IPython import display
 import visdom
 from torch.utils.data import TensorDataset, DataLoader
 
-def conv_block(input_channels,num_channels):
-    return nn.Sequential(
-        nn.BatchNorm2d(input_channels),
-        nn.ReLU(),
-        nn.Conv2d(input_channels,num_channels,kernel_size=3,padding=1)
+def vgg_block(num_convs,in_channels,out_channels):
+    layers = []
+    for _ in range(num_convs):
+        layers.append(
+            nn.Conv2d(in_channels,out_channels,kernel_size=3,padding=1)
+        )
+        layers.append(nn.ReLU())
+        in_channels = out_channels
+    layers.append(
+        nn.MaxPool2d(kernel_size=2,stride=2)
     )
+    return nn.Sequential(*layers)
 
-def transition_block(input_channels,num_channels):
+def classifier(conv_arch = ((1,64),(1,128),(2,256),(2,512),(2,512)),ratio = 1,output=10,size=224):
+    '''vgg架构，最终用于直接调用的分类器，前面的是轮子，ratio用于调整架构宽度，ratio越大宽度越窄，仅能输入2的n次幂(ratio <= 32)'''
+    '''使用方法为: net = classifier(...)'''
+    size_linear = size // 32
+    conv_blks = []
+    in_channels = 1
+    arch = [(pair[0],pair[1] // ratio) for pair in conv_arch]
+    for(num_convs,out_channels) in arch:
+        conv_blks.append(vgg_block(num_convs,in_channels,out_channels))
+        in_channels = out_channels
     return nn.Sequential(
-        nn.BatchNorm2d(input_channels),
-        nn.ReLU(),
-        nn.Conv2d(input_channels,num_channels,kernel_size=1),
-        nn.AvgPool2d(kernel_size=2,stride=2)
-    )
-
-
-class DenseBlock(nn.Module):
-    def __init__(self,num_convs,input_channels,num_channels):
-        super(DenseBlock, self).__init__()
-        layer = []
-        for i in range(num_convs):
-            layer.append(conv_block(
-                num_channels * i + input_channels, num_channels))
-        self.net = nn.Sequential(*layer)
-        
-    def forward(self,X):
-        for blk in self.net:
-            Y = blk(X)
-            X = torch.cat((X,Y), dim = 1)
-        return X
-    
-
-def classifier(num_channels=64,growth_rate=32,num_output=10,num_convs_in_dense_block=[4,4,4,4]):
-    '''最终用于训练的模型，架构是dense net，前面的都是轮子'''
-    '''使用方法为： net = classifier(...)'''
-    blks = []
-    input_layer = nn.Sequential(
-        nn.Conv2d(1,64,kernel_size=7,stride=2,padding=3),
-        nn.BatchNorm2d(64),
-        nn.ReLU(),
-        nn.MaxPool2d(kernel_size=3,stride=2,padding=1)
-    )
-    for i,num_convs in enumerate(num_convs_in_dense_block):
-        blks.append(DenseBlock(num_convs,num_channels,growth_rate))
-        num_channels += num_convs*growth_rate
-        if i != len(num_convs_in_dense_block) - 1:
-            blks.append(transition_block(num_channels,num_channels//2))
-            num_channels = num_channels // 2
-    return nn.Sequential(
-        input_layer,
-        *blks,
-        nn.BatchNorm2d(num_channels),
-        nn.ReLU(),
-        nn.AdaptiveAvgPool2d((1,1)),
+        *conv_blks,
         nn.Flatten(),
-        nn.Linear(num_channels,num_output)
+        nn.Linear(out_channels * size_linear * size_linear,4096),nn.ReLU(),nn.Dropout(0.5),
+        nn.Linear(4096,4096),nn.ReLU(),nn.Dropout(0.5),
+        nn.Linear(4096,output)
     )
 
 class accumulator: #轮子，用于记录训练中的loss和accuracy以便于可视化
@@ -109,8 +82,8 @@ def data_iter(data,labels,batch_size=100): #输入张量
 def loss():
     return torch.nn.CrossEntropyLoss()
 
-def optimize(model,lr = 0.01,momentum = 0.5):
-    return torch.optim.SGD(model.parameters(),lr=lr,momentum=momentum)
+def optimize(model,lr = 0.01):
+    return torch.optim.SGD(model.parameters(),lr=lr)
 
 def train_epoch(X,y,net,loss,optimizer,device): # return the loss and accuracy
     optimizer.zero_grad()
@@ -162,7 +135,6 @@ def accuracy_test(net,data_iter,device=None):
     return metric[0] / metric[1]
 
 '''下面是测试用代码'''
-import d2l
 
 def load_data_fashion_mnist(batch_size, resize=None):  #@save
     """下载Fashion-MNIST数据集，然后将其加载到内存中"""
@@ -180,7 +152,11 @@ def load_data_fashion_mnist(batch_size, resize=None):  #@save
                             num_workers=1))
 
 if __name__ == '__main__':
-    lr,num_epochs,batch_size = 0.1,10,256
+    lr,num_epochs,batch_size = 0.01,10,50
     train_iter,test_iter = load_data_fashion_mnist(batch_size,resize = 96)
-    net = classifier()
-    train(net,train_iter,test_iter,num_epochs,loss(),optimize(net),'cuda')
+    net = classifier(ratio=4,size=96)
+    train(net,train_iter,test_iter,num_epochs,loss(),optimize(net,lr),'cuda')
+    '''X = torch.randn(size=(1,1,96,96))
+    for blk in net:
+        X = blk(X)
+        print(blk.__class__.__name__,'output shape:/t',X.shape)'''
