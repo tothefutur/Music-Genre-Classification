@@ -25,12 +25,11 @@ def vgg_block(num_convs,in_channels,out_channels):
     )
     return nn.Sequential(*layers)
 
-def classifier(conv_arch = ((1,64),(1,128),(2,256),(2,512),(2,512)),ratio = 1,output=10,size=224):
-    '''vgg架构，最终用于直接调用的分类器，前面的是轮子，ratio用于调整架构宽度，ratio越大宽度越窄，仅能输入2的n次幂(ratio <= 32)'''
-    '''使用方法为: net = classifier(...)'''
-    size_linear = size // 32
+def classifier(conv_arch = ((1,64),(1,128),(2,256),(2,512),(2,512)),ratio = 1,output=10,size_x=224,size_y=224,in_channels=1):
+    '''vgg架构，最终用于直接调用的分类器，size_x与size_y为输入数据的尺寸，应当为32的整数倍，ratio用于调整架构宽度，ratio越大宽度越窄，仅能输入2的n次幂(ratio <= 32)'''
+    '''使用方法为: net = classifier(...) net.apply(weight_init)'''
+    size_linear = (size_x // 32) * (size_y // 32)
     conv_blks = []
-    in_channels = 1
     arch = [(pair[0],pair[1] // ratio) for pair in conv_arch]
     for(num_convs,out_channels) in arch:
         conv_blks.append(vgg_block(num_convs,in_channels,out_channels))
@@ -38,7 +37,8 @@ def classifier(conv_arch = ((1,64),(1,128),(2,256),(2,512),(2,512)),ratio = 1,ou
     return nn.Sequential(
         *conv_blks,
         nn.Flatten(),
-        nn.Linear(out_channels * size_linear * size_linear,4096),nn.ReLU(),nn.Dropout(0.5),
+        nn.Linear(out_channels * size_linear,4096),nn.ReLU(),nn.Dropout(0.5),
+        #nn.AdaptiveAvgPool2d(output_size=128),
         nn.Linear(4096,4096),nn.ReLU(),nn.Dropout(0.5),
         nn.Linear(4096,output)
     )
@@ -159,8 +159,8 @@ def load_data_fashion_mnist(batch_size, resize=None):  #@save
 
 if __name__ == '__main__':
     lr,num_epochs,batch_size = 0.001,10,50
-    train_iter,test_iter = load_data_fashion_mnist(batch_size,resize = 96)
-    net = classifier(ratio=4,size=96)
+    train_iter,test_iter = load_data_fashion_mnist(batch_size,resize = 224)
+    net = classifier(ratio=4,size_x=224,size_y=224)
     net.apply(weight_init)
     train(net,train_iter,test_iter,num_epochs,loss(),optimize(net,lr),'cuda')
     '''X = torch.randn(size=(1,1,96,96))
