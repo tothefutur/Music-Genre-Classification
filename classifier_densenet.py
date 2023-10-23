@@ -101,7 +101,12 @@ class visualize(object): #利用visdom实现loss,accuracy的可视化监控
             update='append',
             opts=dict(legend=['train_loss','train_accuracy','test_accuracy']))
 
-def data_iter(data,labels,batch_size=100): #输入张量
+'''def data_iter(data,labels,batch_size=100): #输入张量
+    data_set = TensorDataset(torch.FloatTensor(data),torch.LongTensor(labels))
+    data_loader = DataLoader(data_set,batch_size=batch_size,shuffle=True)
+    return iter(data_loader)'''
+
+def data_iter(train_data,test_data,labels,batch_size=100): #输入张量
     data_set = TensorDataset(torch.FloatTensor(data),torch.LongTensor(labels))
     data_loader = DataLoader(data_set,batch_size=batch_size,shuffle=True)
     return iter(data_loader)

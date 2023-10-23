@@ -1,16 +1,9 @@
 import torch
 from torch import nn
 import torchvision
-import torchvision.models as models
 from torch.utils import data
 from torchvision import transforms
-import random
-import pandas
-import numpy as np
-import matplotlib.pyplot as plt
-from IPython import display
 import visdom
-from torch.utils.data import TensorDataset, DataLoader
 
 def vgg_block(num_convs,in_channels,out_channels):
     layers = []
@@ -25,10 +18,11 @@ def vgg_block(num_convs,in_channels,out_channels):
     )
     return nn.Sequential(*layers)
 
-def classifier(conv_arch = ((1,64),(1,128),(2,256),(2,512),(2,512)),ratio = 1,output=10,size_x=224,size_y=224,in_channels=1):
+def classifier(conv_arch = ((1,64),(1,128),(2,256),(2,512),(2,512)),ratio = 1,output=10,size_x=224,size_y=224,in_channels=1,layers=5):
     '''vgg架构，最终用于直接调用的分类器，size_x与size_y为输入数据的尺寸，应当为32的整数倍，ratio用于调整架构宽度，ratio越大宽度越窄，仅能输入2的n次幂(ratio <= 32)'''
     '''使用方法为: net = classifier(...) net.apply(weight_init)'''
-    size_linear = (size_x // 32) * (size_y // 32)
+    ratio1 = 2 ** layers
+    size_linear = (size_x // ratio1) * (size_y // ratio1)
     conv_blks = []
     arch = [(pair[0],pair[1] // ratio) for pair in conv_arch]
     for(num_convs,out_channels) in arch:
@@ -38,8 +32,9 @@ def classifier(conv_arch = ((1,64),(1,128),(2,256),(2,512),(2,512)),ratio = 1,ou
         *conv_blks,
         nn.Flatten(),
         nn.Linear(out_channels * size_linear,4096),nn.ReLU(),nn.Dropout(0.5),
+        #nn.Linear(3584,4096),nn.ReLU(),nn.Dropout(0.5),
         #nn.AdaptiveAvgPool2d(output_size=128),
-        nn.Linear(4096,4096),nn.ReLU(),nn.Dropout(0.5),
+        #nn.Linear(4096,4096),nn.ReLU(),nn.Dropout(0.5),
         nn.Linear(4096,output)
     )
     
@@ -80,10 +75,21 @@ class visualize(object): #利用visdom实现loss,accuracy的可视化监控
             update='append',
             opts=dict(legend=['train_loss','train_accuracy','test_accuracy']))
 
-def data_iter(data,labels,batch_size=100): #输入张量
+'''def data_iter(data,labels,batch_size=100): #输入张量
     data_set = TensorDataset(torch.FloatTensor(data),torch.LongTensor(labels))
     data_loader = DataLoader(data_set,batch_size=batch_size,shuffle=True)
-    return iter(data_loader)
+    return iter(data_loader)'''
+    
+def data_iter(train_data,test_data,batch_size=100): #输入张量
+    #data_set1 = TensorDataset(torch.FloatTensor(data))
+    #data_set2 = TensorDataset(torch.FloatTensor(test_data))
+    #data_loader = DataLoader(data_set,batch_size=batch_size,shuffle=True)
+    return (data.DataLoader(
+        train_data,batch_size=batch_size,shuffle=True,num_workers=4,pin_memory=True
+    ),
+    data.DataLoader(
+        test_data,batch_size=batch_size,shuffle=False,num_workers=4,pin_memory=True
+    ))
 
 def loss():
     return torch.nn.CrossEntropyLoss()
