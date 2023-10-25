@@ -48,10 +48,6 @@ class GTZANDataset:
     def __init__(self, rootDir=r"..//dataset//archive//Data//images_original",resize=None):
         self.rootDir = rootDir
         self.transform = PNGToMFCC(resize=resize)
-        #self.transform = [PNGToMFCC()]
-        #if resize:
-        #    self.transform.insert(0,transforms.Resize(resize))
-        #self.transform = transforms.Compose(self.transform)
         self.data = datasets.ImageFolder(
             root=self.rootDir,
             transform=self.transform

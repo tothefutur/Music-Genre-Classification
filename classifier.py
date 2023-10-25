@@ -80,15 +80,12 @@ class visualize(object): #利用visdom实现loss,accuracy的可视化监控
     data_loader = DataLoader(data_set,batch_size=batch_size,shuffle=True)
     return iter(data_loader)'''
     
-def data_iter(train_data,test_data,batch_size=100): #输入张量
-    #data_set1 = TensorDataset(torch.FloatTensor(data))
-    #data_set2 = TensorDataset(torch.FloatTensor(test_data))
-    #data_loader = DataLoader(data_set,batch_size=batch_size,shuffle=True)
+def data_iter(train_data,test_data,batch_size=50): #输入张量
     return (data.DataLoader(
-        train_data,batch_size=batch_size,shuffle=True,num_workers=4,pin_memory=True
+        train_data,batch_size=batch_size,shuffle=True,num_workers=4,prefetch_factor=2
     ),
     data.DataLoader(
-        test_data,batch_size=batch_size,shuffle=False,num_workers=4,pin_memory=True
+        test_data,batch_size=batch_size,shuffle=False,num_workers=4,prefetch_factor=2
     ))
 
 def loss():
@@ -165,8 +162,8 @@ def load_data_fashion_mnist(batch_size, resize=None):  #@save
 
 if __name__ == '__main__':
     lr,num_epochs,batch_size = 0.001,10,50
-    train_iter,test_iter = load_data_fashion_mnist(batch_size,resize = 224)
-    net = classifier(ratio=4,size_x=224,size_y=224)
+    train_iter,test_iter = load_data_fashion_mnist(batch_size,resize = 448)
+    net = classifier(ratio=4,size_x=448,size_y=448)
     net.apply(weight_init)
     train(net,train_iter,test_iter,num_epochs,loss(),optimize(net,lr),'cuda')
     '''X = torch.randn(size=(1,1,96,96))
