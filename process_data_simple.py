@@ -1,4 +1,3 @@
-import csv
 import torch
 import pandas as pd
 from torch.utils.data import Dataset, random_split
@@ -54,10 +53,10 @@ class my_dataset(Dataset):
 
 
 class GTZANDataset:
-    def __init__(self, rootDir=r"..//dataset//archive//Data//images_original"):
+    def __init__(self, rootDir=r"..\dataset\archive\Data\features_3_sec.csv", resize=(1, 20)):
         self.rootDir = rootDir
 
-        self.data = my_dataset(rootDir)
+        self.data = my_dataset(rootDir, resize)
 
         self.trainDataset, self.testDataset = random_split(
             dataset=self.data,
@@ -77,6 +76,6 @@ class GTZANDataset:
 
 
 if __name__ == "__main__":
-    dataset = GTZANDataset(r"..\dataset\archive\Data\features_3_sec.csv")
-    print(dataset)
+    dataset = GTZANDataset(r"..\dataset\archive\Data\features_3_sec.csv").data
+    print(dataset[1])
 
