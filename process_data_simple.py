@@ -1,5 +1,6 @@
 import torch
 import pandas as pd
+import numpy as np
 from torch.utils.data import Dataset, random_split
 
 class my_dataset(Dataset):
@@ -36,9 +37,8 @@ class my_dataset(Dataset):
                 var_string_list.append('_var')
                 var_col = ''.join(var_string_list)
                 mean = torch.tensor(df.loc[row, mean_col])
-                var = torch.tensor((df.loc[row, var_col]))
-                for i in range(row_num):
-                    single_data[i, count - 1] = torch.normal(mean, pow(var, 0.5))
+                var = torch.tensor(df.loc[row, var_col])
+                single_data[:, count - 1] = torch.tensor(np.random.normal(mean, pow(var, 0.5), size=row_num))
             single_data = torch.Tensor(single_data)
             self.data.append(single_data)
             self.targets.append(single_label)
@@ -77,6 +77,6 @@ class GTZANDataset:
 
 
 if __name__ == "__main__":
-    dataset = GTZANDataset(r"..\dataset\archive\Data\features_3_sec.csv", resize=(3, 5)).data
+    dataset = GTZANDataset(r"..\dataset\archive\Data\features_3_sec.csv", resize=(5, 20)).data
     print(dataset[1])
 
