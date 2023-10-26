@@ -37,7 +37,8 @@ class my_dataset(Dataset):
                 var_col = ''.join(var_string_list)
                 mean = torch.tensor(df.loc[row, mean_col])
                 var = torch.tensor((df.loc[row, var_col]))
-                single_data[:, count - 1] = torch.normal(mean, pow(var, 0.5))
+                for i in range(row_num):
+                    single_data[i, count - 1] = torch.normal(mean, pow(var, 0.5))
             single_data = torch.Tensor(single_data)
             self.data.append(single_data)
             self.targets.append(single_label)
@@ -76,6 +77,6 @@ class GTZANDataset:
 
 
 if __name__ == "__main__":
-    dataset = GTZANDataset(r"..\dataset\archive\Data\features_3_sec.csv").data
+    dataset = GTZANDataset(r"..\dataset\archive\Data\features_3_sec.csv", resize=(3, 5)).data
     print(dataset[1])
 
