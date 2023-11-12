@@ -33,8 +33,8 @@ def classifier(conv_arch = ((1,64),(1,128),(2,256),(2,512),(2,512)),ratio = 1,ou
         nn.Flatten(),
         nn.Linear(out_channels * size_linear,4096),nn.ReLU(),nn.Dropout(0.5),
         #nn.Linear(3584,4096),nn.ReLU(),nn.Dropout(0.5),
-        #nn.AdaptiveAvgPool2d(output_size=128),
-        #nn.Linear(4096,4096),nn.ReLU(),nn.Dropout(0.5),
+        #nn.AdaptiveAvgPool1d(output_size=4096),
+        nn.Linear(4096,4096),nn.ReLU(),nn.Dropout(0.5),
         nn.Linear(4096,output)
     )
     
