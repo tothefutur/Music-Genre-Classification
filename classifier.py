@@ -31,11 +31,11 @@ def classifier(conv_arch = ((1,64),(1,128),(2,256),(2,512),(2,512)),ratio = 1,ou
     return nn.Sequential(
         *conv_blks,
         nn.Flatten(),
-        nn.Linear(out_channels * size_linear,4096),nn.ReLU(),nn.Dropout(0.5),
+        nn.Linear(out_channels * size_linear,512),nn.ReLU(),nn.Dropout(0.5),
         #nn.Linear(3584,4096),nn.ReLU(),nn.Dropout(0.5),
         #nn.AdaptiveAvgPool1d(output_size=4096),
-        nn.Linear(4096,4096),nn.ReLU(),nn.Dropout(0.5),
-        nn.Linear(4096,output)
+        nn.Linear(512,512),nn.ReLU(),nn.Dropout(0.5),
+        nn.Linear(512,output)
     )
     
 def weight_init(m):
