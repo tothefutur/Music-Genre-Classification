@@ -18,29 +18,31 @@ def vgg_block(num_convs,in_channels,out_channels):
     )
     return nn.Sequential(*layers)
 
-def classifier(conv_arch = ((1,64),(1,128),(2,256),(2,512),(2,512)),ratio = 1,output=10,size_x=224,size_y=224,in_channels=1,layers=5):
+def classifier(conv_arch = ((1,64),(1,128),(2,256),(2,512),(2,512)),ratio = 1,output=10,size_x=224,size_y=224,in_channels=1,layers=5,size_linear = 2048):
     '''vgg架构，最终用于直接调用的分类器，size_x与size_y为输入数据的尺寸，应当为32的整数倍，ratio用于调整架构宽度，ratio越大宽度越窄，仅能输入2的n次幂(ratio <= 32)'''
     '''使用方法为: net = classifier(...) net.apply(weight_init)'''
     ratio1 = 2 ** layers
-    size_linear = (size_x // ratio1) * (size_y // ratio1)
-    conv_blks = []
+    #size_linear = (size_x // ratio1) * (size_y // ratio1)
+    '''conv_blks = []
     arch = [(pair[0],pair[1] // ratio) for pair in conv_arch]
     for(num_convs,out_channels) in arch:
         conv_blks.append(vgg_block(num_convs,in_channels,out_channels))
-        in_channels = out_channels
+        in_channels = out_channels'''
     return nn.Sequential(
-        *conv_blks,
+        #*conv_blks,
         nn.Flatten(),
-        nn.Linear(out_channels * size_linear,512),nn.ReLU(),nn.Dropout(0.5),
+        #nn.Linear(out_channels * size_linear,size_linear),nn.ReLU(),nn.Dropout(0.5),
         #nn.Linear(3584,4096),nn.ReLU(),nn.Dropout(0.5),
         #nn.AdaptiveAvgPool1d(output_size=4096),
-        nn.Linear(512,512),nn.ReLU(),nn.Dropout(0.5),
-        nn.Linear(512,output)
+        nn.Linear(size_linear,64),nn.ReLU(),
+        #nn.Dropout(0.5),
+        nn.Linear(64,output)
     )
     
 def weight_init(m):
     if type(m) == nn.Linear:
-        nn.init.xavier_normal_(m.weight)
+        #nn.init.xavier_normal_(m.weight)
+        nn.init.normal_(m.weight,std=0.01)
     elif type(m) == nn.Conv2d:
         nn.init.xavier_normal_(m.weight)
 
