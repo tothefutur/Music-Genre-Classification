@@ -104,6 +104,14 @@ def accuracy_test(net,data_iter,device=None):
             metric.add((accuracy(net(X), y), y.numel()))
     return metric[0] / metric[1]
 
+def save_model(net,path): #保存为.pth文件
+    torch.save(net,path)
+
+def load_model(path,model):
+    model = torch.load(path)
+    model.eval()
+    return model
+
 '''下面是测试用代码'''
 
 def load_data_fashion_mnist(batch_size, resize=None):  #@save
