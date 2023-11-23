@@ -2,8 +2,6 @@ import torch
 import pandas as pd
 import numpy as np
 from torch.utils.data import Dataset, random_split
-import torchvision.transforms
-from sklearn import preprocessing
 
 class my_dataset(Dataset):
 
@@ -21,9 +19,6 @@ class my_dataset(Dataset):
     def __init__(self, root_path): #直接读取root_path下的csv文件，
         self.data = []
         self.targets = []
-        #row_num = resize[0]
-        #col_num = resize[1]
-        #transform1 = torchvision.transforms.Compose([torchvision.transforms.ToTensor()])
 
         df = pd.read_csv(root_path)
         for col in df.columns:
@@ -34,24 +29,12 @@ class my_dataset(Dataset):
         for row in range(len(df)):
             single_data = df.loc[row,'chroma_stft_mean' : 'mfcc20_var']
             single_label = df.loc[row, 'label']
-            #row_label = single_label
-            #single_label = self.classes[single_label]
-            #single_label = torch.tensor(single_label,dtype=torch.long,device='cuda')
             single_data = single_data.to_numpy()
             single_data = single_data.astype(np.float32)
             single_data = torch.from_numpy(single_data)
-            '''min_data = torch.min(single_data)
-            max_data = torch.max(single_data)
-            single_data = (single_data - min_data) / (max_data - min_data)
-            single_data = torch.reshape(single_data,(1,1,57))'''
-            '''mean_data = torch.mean(single_data)
-            std_data = torch.std(single_data)
-            single_data = (single_data - mean_data) / std_data'''
             single_data.to('cuda')
             self.data.append(single_data)
             self.targets.append(single_label)
-            '''if row%100 == 0:
-                i = 0'''
 
 
 
