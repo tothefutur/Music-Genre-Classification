@@ -2,14 +2,19 @@ import numpy as np
 import librosa
 import torch
 from torch.utils.data import random_split
-from torchvision import datasets
+from torchvision import datasets,transforms
 
 
 class PNGToMFCC(object):
-    def __init__(self, n_mfcc=13):
+    def __init__(self, n_mfcc=13,resize=None):
         self.n_mfcc = n_mfcc
+        self.resize = resize
 
     def __call__(self, img):
+        #if self.resize:
+        #    img = img.resize(self.resize)
+        #resize = transforms.Resize(448)
+        #img = resize(img)
         # 将PIL图像转换为灰度图像
         gray_image = img.convert('L')
 
@@ -27,18 +32,22 @@ class PNGToMFCC(object):
 
         # 选择前几个MFCC系数作为特征
         mfcc_features = mfcc[:self.n_mfcc]
+        
+        mfcc_features = np.resize(mfcc_features,self.resize)
 
         # 将特征矩阵转换为PyTorch张量
-        mfcc_tensor = torch.from_numpy(mfcc_features)
+        mfcc_tensor = transforms.ToTensor()(mfcc_features)
+        
+        #print(mfcc_tensor.shape)
 
         return mfcc_tensor.float()
 
 
 class GTZANDataset:
 
-    def __init__(self, rootDir=r"..//dataset//archive//Data//images_original"):
+    def __init__(self, rootDir=r"..//dataset//archive//Data//images_original",resize=None):
         self.rootDir = rootDir
-        self.transform = PNGToMFCC()
+        self.transform = PNGToMFCC(resize=resize)
         self.data = datasets.ImageFolder(
             root=self.rootDir,
             transform=self.transform
@@ -61,11 +70,10 @@ class GTZANDataset:
 
 
 if __name__ == "__main__":
-    data = GTZANDataset(rootDir=r"..//dataset//archive//Data//images_original")
+    data = GTZANDataset(rootDir=r"..//data//music//images_original")
     data1 = data(train="True")
     data2 = data(train="False")
 
     print(len(data1))
     print(len(data2))
     print(data1[10])
-    print(data1[1][0].shape)

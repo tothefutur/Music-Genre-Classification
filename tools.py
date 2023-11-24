@@ -1,51 +1,15 @@
 import torch
 from torch import nn
 import torchvision
-import torchvision.models as models
 from torch.utils import data
 from torchvision import transforms
-import random
-import pandas
-import numpy as np
-import matplotlib.pyplot as plt
-from IPython import display
 import visdom
-from torch.utils.data import TensorDataset, DataLoader
+import my_models
 
-def vgg_block(num_convs,in_channels,out_channels):
-    layers = []
-    for _ in range(num_convs):
-        layers.append(
-            nn.Conv2d(in_channels,out_channels,kernel_size=3,padding=1)
-        )
-        layers.append(nn.ReLU())
-        in_channels = out_channels
-    layers.append(
-        nn.MaxPool2d(kernel_size=2,stride=2)
-    )
-    return nn.Sequential(*layers)
-
-def classifier(conv_arch = ((1,64),(1,128),(2,256),(2,512),(2,512)),ratio = 1,output=10,size_x=224,size_y=224,in_channels=1):
-    '''vgg架构，最终用于直接调用的分类器，size_x与size_y为输入数据的尺寸，应当为32的整数倍，ratio用于调整架构宽度，ratio越大宽度越窄，仅能输入2的n次幂(ratio <= 32)'''
-    '''使用方法为: net = classifier(...) net.apply(weight_init)'''
-    size_linear = (size_x // 32) * (size_y // 32)
-    conv_blks = []
-    arch = [(pair[0],pair[1] // ratio) for pair in conv_arch]
-    for(num_convs,out_channels) in arch:
-        conv_blks.append(vgg_block(num_convs,in_channels,out_channels))
-        in_channels = out_channels
-    return nn.Sequential(
-        *conv_blks,
-        nn.Flatten(),
-        nn.Linear(out_channels * size_linear,4096),nn.ReLU(),nn.Dropout(0.5),
-        #nn.AdaptiveAvgPool2d(output_size=128),
-        nn.Linear(4096,4096),nn.ReLU(),nn.Dropout(0.5),
-        nn.Linear(4096,output)
-    )
-    
 def weight_init(m):
     if type(m) == nn.Linear:
         nn.init.xavier_normal_(m.weight)
+        #nn.init.normal_(m.weight,std=0.01)
     elif type(m) == nn.Conv2d:
         nn.init.xavier_normal_(m.weight)
 
@@ -80,10 +44,13 @@ class visualize(object): #利用visdom实现loss,accuracy的可视化监控
             update='append',
             opts=dict(legend=['train_loss','train_accuracy','test_accuracy']))
 
-def data_iter(data,labels,batch_size=100): #输入张量
-    data_set = TensorDataset(torch.FloatTensor(data),torch.LongTensor(labels))
-    data_loader = DataLoader(data_set,batch_size=batch_size,shuffle=True)
-    return iter(data_loader)
+def data_iter(train_data,test_data,batch_size=50): #输入张量
+    return (data.DataLoader(
+        train_data,batch_size=batch_size,shuffle=True,num_workers=4,prefetch_factor=2
+    ),
+    data.DataLoader(
+        test_data,batch_size=batch_size,shuffle=False,num_workers=4,prefetch_factor=2
+    ))
 
 def loss():
     return torch.nn.CrossEntropyLoss()
@@ -113,9 +80,6 @@ def train(net,train_iter,test_iter,num_epochs,loss,optimizer,device): #visualise
         test_acc = accuracy_test(net,test_iter)
         visualizer.paint(train_l,test_acc,train_acc,epoch)
 
-#def updater():
-    
-
 def accuracy(y_hat,y):
     if len(y_hat.shape) > 1 and y_hat.shape[1] > 1:
         y_hat = y_hat.argmax(axis=1)
@@ -140,6 +104,14 @@ def accuracy_test(net,data_iter,device=None):
             metric.add((accuracy(net(X), y), y.numel()))
     return metric[0] / metric[1]
 
+def save_model(net,path): #保存为.pth文件
+    torch.save(net,path)
+
+def load_model(path,model):
+    model = torch.load(path)
+    model.eval()
+    return model
+
 '''下面是测试用代码'''
 
 def load_data_fashion_mnist(batch_size, resize=None):  #@save
@@ -159,8 +131,8 @@ def load_data_fashion_mnist(batch_size, resize=None):  #@save
 
 if __name__ == '__main__':
     lr,num_epochs,batch_size = 0.001,10,50
-    train_iter,test_iter = load_data_fashion_mnist(batch_size,resize = 224)
-    net = classifier(ratio=4,size_x=224,size_y=224)
+    train_iter,test_iter = load_data_fashion_mnist(batch_size,resize = 448)
+    net = my_models.vgg(ratio=4,size_x=448,size_y=448)
     net.apply(weight_init)
     train(net,train_iter,test_iter,num_epochs,loss(),optimize(net,lr),'cuda')
     '''X = torch.randn(size=(1,1,96,96))
