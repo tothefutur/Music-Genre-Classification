@@ -74,8 +74,8 @@ def test_acc(model, test_loader, device):
     loss = torch.nn.CrossEntropyLoss()
     with torch.no_grad():
         for x, y in test_loader:
-            x.to(device)
-            y.to(device)
+            x = x.to(device)
+            y = y.to(device)
             prediction_y = model(x)
             prediction_y = torch.squeeze(prediction_y)
             l = loss(prediction_y, y)
