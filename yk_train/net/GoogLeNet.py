@@ -13,7 +13,7 @@ class Inception(nn.Module):
         self.p2_1 = nn.Conv2d(in_channels, c2[0], kernel_size=1)
         self.p2_2 = nn.Conv2d(c2[0], c2[1], kernel_size=3, padding=1)
 
-        self.p3_1 = nn.Conv2d(in_channels, c3[0], kernel_size=5, padding=2)
+        self.p3_1 = nn.Conv2d(in_channels, c3[0], kernel_size=1)
         self.p2_2 = nn.Conv2d(c3[0], c3[1], kernel_size=5, padding=2)
 
         self.p4_1 = nn.MaxPool2d(kernel_size=3, stride=1, padding=1)
@@ -64,6 +64,6 @@ if __name__ == "__main__":
         X = layer(X)
         print(layer.__class__.__name__, 'output shape:\t', X.shape)
 
-    lr, num_epochs, batch_size = 0.1, 10, 128
-    train_iter, test_iter = d2l.load_data_fashion_mnist(batch_size, resize=96)
-    d2l.train_ch6(net, train_iter, test_iter, num_epochs, lr, d2l.try_gpu())
+    # lr, num_epochs, batch_size = 0.1, 10, 128
+    # train_iter, test_iter = d2l.load_data_fashion_mnist(batch_size, resize=96)
+    # d2l.train_ch6(net, train_iter, test_iter, num_epochs, lr, d2l.try_gpu())
