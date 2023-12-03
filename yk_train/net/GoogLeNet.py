@@ -14,7 +14,7 @@ class Inception(nn.Module):
         self.p2_2 = nn.Conv2d(c2[0], c2[1], kernel_size=3, padding=1)
 
         self.p3_1 = nn.Conv2d(in_channels, c3[0], kernel_size=1)
-        self.p2_2 = nn.Conv2d(c3[0], c3[1], kernel_size=5, padding=2)
+        self.p3_2 = nn.Conv2d(c3[0], c3[1], kernel_size=5, padding=2)
 
         self.p4_1 = nn.MaxPool2d(kernel_size=3, stride=1, padding=1)
         self.p4_2 = nn.Conv2d(in_channels, c4, kernel_size=1)
@@ -51,7 +51,7 @@ b4 = nn.Sequential(Inception(480, 192, (96, 208), (16, 48), 64),
                    )
 
 b5 = nn.Sequential(Inception(832, 256, (160, 320), (32, 128), 128),
-                   Inception(832, 284, (192, 384), (48, 128), 128),
+                   Inception(832, 384, (192, 384), (48, 128), 128),
                    nn.AdaptiveAvgPool2d((1, 1)),
                    nn.Flatten()
                    )
