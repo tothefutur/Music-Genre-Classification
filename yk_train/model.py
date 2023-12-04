@@ -63,6 +63,20 @@ model_linear_more_features_57 = nn.Sequential(
     nn.Linear(64, 10)
 )
 
+# epochs: 50 accuracy is about 90%
+model_linear_scale = nn.Sequential(
+    nn.Linear(58, 512),
+    nn.ReLU(),
+    nn.Dropout(0.2),
+    nn.Linear(512, 256),
+    nn.ReLU(),
+    nn.Dropout(0.2),
+    nn.Linear(256, 64),
+    nn.ReLU(),
+    nn.Dropout(0.2),
+    nn.Linear(64, 10)
+)
+
 def test_acc(model, test_loader, device):
     if isinstance(model, nn.Module):
         model.eval()
@@ -77,8 +91,8 @@ def test_acc(model, test_loader, device):
             x = x.to(device)
             y = y.to(device)
             prediction_y = model(x)
-            prediction_y = torch.squeeze(prediction_y)
-            l = loss(prediction_y, y)
+            # prediction_y = torch.squeeze(prediction_y)
+            l = loss(prediction_y, y.long())
             total_loss += l.item()
             correct_num += (prediction_y.argmax(1) == y).sum().item()
             total_num += y.numel()
@@ -109,8 +123,8 @@ def train_model(dataset, model, epochs=100, lr=0.1, batch_size=128,
             optimizer.zero_grad()
 
             prediction_y = model(x)
-            prediction_y = torch.squeeze(prediction_y)
-            l = loss(prediction_y, y)
+            # prediction_y = torch.squeeze(prediction_y)
+            l = loss(prediction_y, y.long())
             l.backward()
             optimizer.step()
             # print(prediction_y)
