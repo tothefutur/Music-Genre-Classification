@@ -1,0 +1,21 @@
+epoch 0, test accuracy: 0.4207540874207541
+epoch 0, loss: 1.2646636962890625
+epoch 5, test accuracy: 0.6816816816816816
+epoch 5, loss: 0.9594401121139526
+epoch 10, test accuracy: 0.7717717717717718
+epoch 10, loss: 0.4661143720149994
+epoch 15, test accuracy: 0.7957957957957958
+epoch 15, loss: 0.08226470649242401
+epoch 20, test accuracy: 0.8335001668335001
+epoch 20, loss: 0.07920586317777634
+epoch 25, test accuracy: 0.8054721388054722
+epoch 25, loss: 0.2565308213233948
+epoch 30, test accuracy: 0.8581915248581915
+epoch 30, loss: 0.00013200484681874514
+epoch 35, test accuracy: 0.8505171838505172
+epoch 35, loss: 0.11147256195545197
+epoch 40, test accuracy: 0.09576242909576244
+epoch 40, loss: nan
+epoch 45, test accuracy: 0.09576242909576244
+epoch 45, loss: nan
+失败了qaq,不知道原因，使用别的卷积神经网络acc更低
