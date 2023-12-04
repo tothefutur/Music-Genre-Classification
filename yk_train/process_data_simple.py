@@ -144,7 +144,7 @@ class GTZANDataset_more_features:
             return self.testDataset
 
 class GTZANDataset_scale:
-    def __init__(self, rootDir=r"..\..\dataset\archive\Data\features_3_sec.csv", resize=40):
+    def __init__(self, rootDir=r"..\..\dataset\archive\Data\features_3_sec.csv", resize=58):
         df = pd.read_csv(rootDir)
         df = df.drop(labels="filename", axis=1)
         # Feature Extraction
@@ -155,27 +155,18 @@ class GTZANDataset_scale:
         # Scale the features
         scaler = skp.StandardScaler()
         X = scaler.fit_transform(np.array(df.iloc[:, :-1], dtype=float))
-        # resize X to (len(X), resize, resize), 多出来的部分用0填充
-        X = torch.tensor(X)
-        X = X.view(len(X), 1, -1)
-        for i in range(len(X)):
-            """
-            Traceback (most recent call last):
-            File "D:\yk\Study\2023fall\IntroToAI\project\example\src\yk_train\process_data_simple.py", line 190, in <module>
-            dataset = GTZANDataset_scale(r"D:\yk\Study\2023fall\IntroToAI\project\example\dataset\archive\Data\features_3_sec.csv", resize=224)
-            File "D:\yk\Study\2023fall\IntroToAI\project\example\src\yk_train\process_data_simple.py", line 165, in __init__
-            X[i] = torch.cat((X[i], zeros), dim=1)
-            RuntimeError: The expanded size of the tensor (58) must match the existing size (224) at non-singleton dimension 1.  Target sizes: [1, 58].  Tensor sizes: [224]
-            未知错误，暂时不知道怎么解决
-            """
+        if resize != 58:
+            # resize X to (len(X), 1, resize, resize), 多出来的部分用0填充
+            Y = torch.zeros(len(X), 1, resize, resize)
+            for i in range(len(X)):
+                zeros = torch.zeros(1, 1, resize - X.shape[1])
+                x = torch.tensor(X[i])
+                x = x.view(1, 1, -1)
+                x = torch.cat((x, zeros), dim=2)
+                x = x.view(1, 1, 1, resize)
+                Y[i] = x.repeat(1, 1, resize, 1)
 
-            zeros = torch.zeros(1, resize - X.shape[2])
-            print(X[i].shape)
-            print(zeros.shape)
-            X[i] = torch.cat((X[i], zeros), dim=1)
-            X[i] = X[i].view(1, resize, 1)
-            X[i] = X[i].repeat(1, 1, resize)
-
+            X = Y
         # Split the dataset
         X_train, X_test, y_train, y_test = skms.train_test_split(X, y, test_size=0.3, random_state=0)
         X_train = torch.Tensor(X_train)
