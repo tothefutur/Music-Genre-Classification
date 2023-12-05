@@ -1,0 +1,87 @@
+def train_model(dataset, model, epochs=100, lr=0.1, batch_size=128,
+                device=None):
+    def init_weights(m):
+        if type(m) == nn.Linear or type(m) == nn.Conv2d:
+            nn.init.xavier_uniform_(m.weight)
+
+    model.apply(init_weights)
+    model.to(device)
+    optimizer = torch.optim.SGD(model.parameters(), lr=lr)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer=optimizer, step_size=1, gamma=0.995)
+“““
+gamma的值有点迷，大多都是用的0.9,0.8，但在这里低于0.99基本就学不了了
+”””
+    #scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[20, 30, 80], gamma=0.99, last_epoch=-1)
+    loss = torch.nn.CrossEntropyLoss()
+    train_dataset = dataset.trainDataset
+    test_dataset = dataset.testDataset
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=0, drop_last=False)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True, num_workers=0, drop_last=False)
+
+    for epoch in range(epochs):
+
+        model.train()
+
+        for x, y in train_loader:
+            #print(x.shape)
+
+
+            #print(x.shape)
+            #print(x)
+            #y.unsqueeze(0)
+            x = x.to(device)
+            y = y.to(device)
+            optimizer.zero_grad()
+
+            prediction_y = model(x)
+            # prediction_y = torch.squeeze(prediction_y)
+
+            l = loss(prediction_y, y.long())
+            l.backward()
+            optimizer.step()
+            scheduler.step()
+           # print(lr)
+            # print(prediction_y)
+
+        if epoch % 5 == 0:
+            test_accuracy = test_acc(model, test_loader, device)
+            print(f"epoch {epoch}, test accuracy: {test_accuracy}")
+            print(f"epoch {epoch}, loss: {l.item()}")
+
+
+epoch 0, test accuracy: 0.4124124124124124
+epoch 0, loss: 1.4269143342971802
+epoch 5, test accuracy: 0.8184851518184851
+epoch 5, loss: 0.44718945026397705
+epoch 10, test accuracy: 0.9024811478144811
+epoch 10, loss: 0.1475544422864914
+epoch 15, test accuracy: 0.9042375709042376
+epoch 15, loss: 0.02644278295338154
+epoch 20, test accuracy: 0.9079079079079079
+epoch 20, loss: 0.010377357713878155
+epoch 25, test accuracy: 0.9195862529195863
+epoch 25, loss: 0.036398746073246
+epoch 30, test accuracy: 0.9212545879212546
+epoch 30, loss: 1.6576508642174304e-05
+epoch 35, test accuracy: 0.9232565899232565
+epoch 35, loss: 0.00010035274317488074
+epoch 40, test accuracy: 0.9252585919252586
+epoch 40, loss: 0.0005048762541264296
+epoch 45, test accuracy: 0.9215882549215882
+epoch 45, loss: 0.0003398493572603911
+epoch 50, test accuracy: 0.9282615949282615
+epoch 50, loss: 5.76406500840676e-06
+epoch 55, test accuracy: 0.9282615949282615
+epoch 55, loss: 2.663803388713859e-05
+epoch 60, test accuracy: 0.9295962629295963
+epoch 60, loss: 0.00018607810488902032
+epoch 65, test accuracy: 0.928928928928929
+epoch 65, loss: 0.00021609486429952085
+epoch 70, test accuracy: 0.928928928928929
+epoch 70, loss: 0.000595207151491195
+epoch 75, test accuracy: 0.9279279279279279
+epoch 75, loss: 1.935920590767637e-05
+epoch 80, test accuracy: 0.928928928928929
+epoch 80, loss: 0.00011445734708104283
+epoch 85, test accuracy: 0.928928928928929
+epoch 85, loss: 2.5550636564730667e-05
