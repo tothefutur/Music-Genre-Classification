@@ -1,0 +1,263 @@
+def train_model(dataset, model, epochs=100, lr=0.1, batch_size=128,
+                device=None):
+    def init_weights(m):
+        if type(m) == nn.Linear or type(m) == nn.Conv2d:
+            nn.init.xavier_uniform_(m.weight)
+
+    model.apply(init_weights)
+    model.to(device)
+    optimizer = torch.optim.SGD(model.parameters(), lr=lr)
+    scheduler = torch.optim.lr_scheduler.StepLR(optimizer=optimizer, step_size=30, gamma=0.9)
+    #scheduler = torch.optim.lr_scheduler.MultiStepLR(optimizer, milestones=[20, 30, 80], gamma=0.99, last_epoch=-1)
+    loss = torch.nn.CrossEntropyLoss()
+    train_dataset = dataset.trainDataset
+    test_dataset = dataset.testDataset
+    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True, num_workers=0, drop_last=False)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=True, num_workers=0, drop_last=False)
+    #scheduler = ExponentialLR(optimizer, gamma=0.9)
+    for epoch in range(epochs):
+
+        model.train()
+
+        for x, y in train_loader:
+            #print(x.shape)
+
+
+            #print(x.shape)
+            #print(x)
+            #y.unsqueeze(0)
+            x = x.to(device)
+            y = y.to(device)
+            optimizer.zero_grad()
+
+            prediction_y = model(x)
+            # prediction_y = torch.squeeze(prediction_y)
+
+            l = loss(prediction_y, y.long())
+            l.backward()
+            optimizer.step()
+        scheduler.step()
+           # print(lr)
+            # print(prediction_y)
+
+        if epoch % 5 == 0:
+            test_accuracy = test_acc(model, test_loader, device)
+            print(f"epoch {epoch}, test accuracy: {test_accuracy}")
+            print(f"epoch {epoch}, loss: {l.item()}")
+
+
+test:0.12  lr=0.1  batch_size=128 每30epoches,lr*=0.9
+epoch 0, test accuracy: 0.5604670558798999
+epoch 0, loss: 1.423525094985962
+epoch 5, test accuracy: 0.8690575479566305
+epoch 5, loss: 0.6804762482643127
+epoch 10, test accuracy: 0.8798999165971643
+epoch 10, loss: 0.23651351034641266
+epoch 15, test accuracy: 0.8974145120934112
+epoch 15, loss: 0.16181449592113495
+epoch 20, test accuracy: 0.9274395329441201
+epoch 20, loss: 0.0056649730540812016
+epoch 25, test accuracy: 0.9341117597998332
+epoch 25, loss: 0.052820999175310135
+epoch 30, test accuracy: 0.9407839866555463
+epoch 30, loss: 0.0007794279372319579
+epoch 35, test accuracy: 0.9441201000834029
+epoch 35, loss: 0.0005366145633161068
+epoch 40, test accuracy: 0.9424520433694745
+epoch 40, loss: 0.0004177184891887009
+epoch 45, test accuracy: 0.9399499582985822
+epoch 45, loss: 0.0015115514397621155
+epoch 50, test accuracy: 0.939115929941618
+epoch 50, loss: 0.000731116917449981
+epoch 55, test accuracy: 0.9416180150125104
+epoch 55, loss: 0.005863321013748646
+epoch 60, test accuracy: 0.9407839866555463
+epoch 60, loss: 2.3388511181110516e-05
+epoch 65, test accuracy: 0.9491242702251876
+epoch 65, loss: 2.5150959118036553e-05
+epoch 70, test accuracy: 0.9482902418682235
+epoch 70, loss: 2.867341936507728e-05
+epoch 75, test accuracy: 0.9474562135112594
+epoch 75, loss: 7.087638368830085e-05
+epoch 80, test accuracy: 0.950792326939116
+epoch 80, loss: 4.0366539906244725e-05
+epoch 85, test accuracy: 0.9491242702251876
+epoch 85, loss: 6.373308133333921e-05
+epoch 90, test accuracy: 0.950792326939116
+epoch 90, loss: 1.2024542002109229e-06
+epoch 95, test accuracy: 0.9516263552960801
+epoch 95, loss: 5.6804205996741075e-06
+epoch 100, test accuracy: 0.950792326939116
+epoch 100, loss: 3.397355249035172e-05
+epoch 105, test accuracy: 0.9499582985821518
+epoch 105, loss: 1.5563482520519756e-05
+epoch 110, test accuracy: 0.9499582985821518
+epoch 110, loss: 1.2397219506965484e-05
+epoch 115, test accuracy: 0.9491242702251876
+epoch 115, loss: 0.02162921614944935
+epoch 120, test accuracy: 0.9499582985821518
+epoch 120, loss: 1.7299118553637527e-05
+epoch 125, test accuracy: 0.9499582985821518
+epoch 125, loss: 0.03505828231573105
+epoch 130, test accuracy: 0.9491242702251876
+epoch 130, loss: 9.826673704083078e-06
+epoch 135, test accuracy: 0.9499582985821518
+epoch 135, loss: 7.256175535985676e-07
+epoch 140, test accuracy: 0.9499582985821518
+epoch 140, loss: 4.768353676354309e-07
+epoch 145, test accuracy: 0.9499582985821518
+epoch 145, loss: 1.0210483196715359e-06
+epoch 150, test accuracy: 0.9499582985821518
+epoch 150, loss: 5.312444955052342e-06
+epoch 155, test accuracy: 0.9499582985821518
+epoch 155, loss: 5.162179149920121e-06
+epoch 160, test accuracy: 0.950792326939116
+epoch 160, loss: 1.0728724646469345e-06
+epoch 165, test accuracy: 0.950792326939116
+epoch 165, loss: 9.883608981908765e-06
+epoch 170, test accuracy: 0.950792326939116
+epoch 170, loss: 4.802981493412517e-05
+epoch 175, test accuracy: 0.9516263552960801
+epoch 175, loss: 1.2128157322877087e-06
+epoch 180, test accuracy: 0.9516263552960801
+epoch 180, loss: 1.4117691534920596e-05
+epoch 185, test accuracy: 0.950792326939116
+epoch 185, loss: 9.277545132135856e-07
+epoch 190, test accuracy: 0.950792326939116
+epoch 190, loss: 4.09970925829839e-06
+epoch 195, test accuracy: 0.9499582985821518
+epoch 195, loss: 3.0838025395496516e-06
+epoch 200, test accuracy: 0.9499582985821518
+epoch 200, loss: 1.862931821960956e-05
+epoch 205, test accuracy: 0.9499582985821518
+epoch 205, loss: 2.8143379040557193e-06
+epoch 210, test accuracy: 0.9499582985821518
+epoch 210, loss: 1.423675348632969e-05
+epoch 215, test accuracy: 0.9499582985821518
+epoch 215, loss: 2.285682512592757e-06
+epoch 220, test accuracy: 0.9499582985821518
+epoch 220, loss: 1.658561217254828e-07
+epoch 225, test accuracy: 0.9499582985821518
+epoch 225, loss: 1.9695427511123853e-07
+epoch 230, test accuracy: 0.9499582985821518
+epoch 230, loss: 2.420452574369847e-06
+epoch 235, test accuracy: 0.950792326939116
+epoch 235, loss: 6.530570431095839e-07
+epoch 240, test accuracy: 0.9499582985821518
+epoch 240, loss: 0.0002760130155365914
+epoch 245, test accuracy: 0.9499582985821518
+epoch 245, loss: 8.406168490182608e-06
+epoch 250, test accuracy: 0.9499582985821518
+epoch 250, loss: 2.0317306734796148e-06
+epoch 255, test accuracy: 0.9499582985821518
+epoch 255, loss: 1.1402617872136034e-07
+epoch 260, test accuracy: 0.9491242702251876
+epoch 260, loss: 2.2286941714355635e-07
+epoch 265, test accuracy: 0.950792326939116
+epoch 265, loss: 1.3060194760328159e-05
+epoch 270, test accuracy: 0.950792326939116
+epoch 270, loss: 2.943900199170457e-06
+epoch 275, test accuracy: 0.9491242702251876
+epoch 275, loss: 3.7782665458507836e-06
+epoch 280, test accuracy: 0.9499582985821518
+epoch 280, loss: 3.6281079474065336e-08
+epoch 285, test accuracy: 0.950792326939116
+epoch 285, loss: 8.396448833991599e-07
+epoch 290, test accuracy: 0.9516263552960801
+epoch 290, loss: 8.292798270304047e-07
+epoch 295, test accuracy: 0.9516263552960801
+epoch 295, loss: 3.109799138201197e-07
+epoch 300, test accuracy: 0.9499582985821518
+epoch 300, loss: 2.539673289447819e-07
+epoch 305, test accuracy: 0.9499582985821518
+epoch 305, loss: 7.059078598103952e-06
+epoch 310, test accuracy: 0.950792326939116
+epoch 310, loss: 2.0732034045067849e-07
+epoch 315, test accuracy: 0.9491242702251876
+epoch 315, loss: 8.333759069500957e-06
+epoch 320, test accuracy: 0.9482902418682235
+epoch 320, loss: 7.618993436153687e-07
+epoch 325, test accuracy: 0.9474562135112594
+epoch 325, loss: 4.185595389571972e-05
+epoch 330, test accuracy: 0.9474562135112594
+epoch 330, loss: 5.701312488781696e-08
+epoch 335, test accuracy: 0.9466221851542952
+epoch 335, loss: 3.5917837521992624e-06
+epoch 340, test accuracy: 0.9466221851542952
+epoch 340, loss: 2.850649707397679e-07
+epoch 345, test accuracy: 0.9466221851542952
+epoch 345, loss: 3.213463060092181e-07
+epoch 350, test accuracy: 0.9466221851542952
+epoch 350, loss: 1.1868954743476934e-06
+epoch 355, test accuracy: 0.9474562135112594
+epoch 355, loss: 1.4512245343212271e-06
+epoch 360, test accuracy: 0.9474562135112594
+epoch 360, loss: 3.109807167334111e-08
+epoch 365, test accuracy: 0.9474562135112594
+epoch 365, loss: 0.03221724182367325
+epoch 370, test accuracy: 0.9482902418682235
+epoch 370, loss: 1.088431886842045e-07
+epoch 375, test accuracy: 0.9482902418682235
+epoch 375, loss: 3.265290331455617e-07
+epoch 380, test accuracy: 0.9491242702251876
+epoch 380, loss: 1.1402622845935184e-07
+epoch 385, test accuracy: 0.9491242702251876
+epoch 385, loss: 9.219917046721093e-06
+epoch 390, test accuracy: 0.9491242702251876
+epoch 390, loss: 6.530581799779611e-07
+epoch 395, test accuracy: 0.9491242702251876
+epoch 395, loss: 6.945213044673437e-07
+epoch 400, test accuracy: 0.9499582985821518
+epoch 400, loss: 6.271416737035906e-07
+epoch 405, test accuracy: 0.9499582985821518
+epoch 405, loss: 1.5600616052324767e-06
+epoch 410, test accuracy: 0.9499582985821518
+epoch 410, loss: 1.1661716143862577e-06
+epoch 415, test accuracy: 0.9499582985821518
+epoch 415, loss: 3.939003363484517e-06
+epoch 420, test accuracy: 0.9499582985821518
+epoch 420, loss: 1.140262355647792e-07
+epoch 425, test accuracy: 0.9499582985821518
+epoch 425, loss: 4.561027253657812e-07
+epoch 430, test accuracy: 0.9499582985821518
+epoch 430, loss: 5.13117356604198e-07
+epoch 435, test accuracy: 0.950792326939116
+epoch 435, loss: 1.166169454336341e-06
+epoch 440, test accuracy: 0.950792326939116
+epoch 440, loss: 3.0009096008143388e-06
+epoch 445, test accuracy: 0.950792326939116
+epoch 445, loss: 2.2286896239620546e-07
+epoch 450, test accuracy: 0.950792326939116
+epoch 450, loss: 8.914745990296069e-07
+epoch 455, test accuracy: 0.9491242702251876
+epoch 455, loss: 8.479001735395286e-06
+epoch 460, test accuracy: 0.9491242702251876
+epoch 460, loss: 1.9436024558672216e-06
+epoch 465, test accuracy: 0.9491242702251876
+epoch 465, loss: 6.634228952862031e-07
+epoch 470, test accuracy: 0.9491242702251876
+epoch 470, loss: 2.43080626205483e-06
+epoch 475, test accuracy: 0.9491242702251876
+epoch 475, loss: 1.6637249018458533e-06
+epoch 480, test accuracy: 0.950792326939116
+epoch 480, loss: 4.249885478202486e-06
+epoch 485, test accuracy: 0.9491242702251876
+epoch 485, loss: 2.1509047201107023e-06
+epoch 490, test accuracy: 0.9499582985821518
+epoch 490, loss: 0.038070570677518845
+epoch 495, test accuracy: 0.950792326939116
+epoch 495, loss: 3.700586148625007e-06
+epoch 500, test accuracy: 0.950792326939116
+epoch 500, loss: 5.286653959046816e-07
+epoch 505, test accuracy: 0.9499582985821518
+epoch 505, loss: 3.109807167334111e-08
+epoch 510, test accuracy: 0.9499582985821518
+epoch 510, loss: 3.2652872050675796e-07
+epoch 515, test accuracy: 0.9499582985821518
+epoch 515, loss: 2.487820665919571e-06
+epoch 520, test accuracy: 0.9491242702251876
+epoch 520, loss: 0.02927781455218792
+epoch 525, test accuracy: 0.9491242702251876
+epoch 525, loss: 3.8872451568749966e-07
+epoch 530, test accuracy: 0.9491242702251876
+epoch 530, loss: 8.033619565139816e-07  
